@@ -3,7 +3,7 @@ const app = express();
 app.use(express.json());
 
 // przykładowe dane
-let pitches = [
+let courts = [
     { id: 1, name: 'Boisko Orlik', status: 'available' },
     { id: 2, name: "Kort Tenisowy", status: 'available' }];
 let reservations = [];
@@ -40,15 +40,15 @@ const errorHandler = (err, req, res, next) => {
 // UŻYTKOWNIK NIEZALOGOWANY
 
 // Przeglądanie boisk
-app.get('/api/pitches', (req, res) => {
-  res.status(200).json(pitches);
+app.get('/api/courts', (req, res) => {
+  res.status(200).json(courts);
 });
 
 // Pokaż obiekt o podanym id
-app.get('/api/pitches/:id', (req, res, next) => {
-  const pitch = pitches.find(p => p.id === parseInt(req.params.id));
-  if (!pitch) return next(new AppError('Nie znaleziono boiska o podanym ID', 404));
-  res.status(200).json(pitch);
+app.get('/api/courts/:id', (req, res, next) => {
+  const court = courts.find(p => p.id === parseInt(req.params.id));
+  if (!court) return next(new AppError('Nie znaleziono boiska o podanym ID', 404));
+  res.status(200).json(court);
 });
 
 // Rejestracja / Logowanie
@@ -62,9 +62,9 @@ app.post('/api/auth/register', (req, res) => {
 
 // Dokonywanie rezerwacji + Płatność online
 app.post('/api/reservations', checkRole(['user', 'admin']), (req, res) => {
-  const { pitchId, start, end } = req.body;
+  const { courtId, start, end } = req.body;
 
-  const newRes = { id: Date.now(), pitchId, start, end, paid: false, userId: 'current-user' };
+  const newRes = { id: Date.now(), courtId, start, end, paid: false, userId: 'current-user' };
 
   newRes.paid = true;
 
@@ -81,25 +81,26 @@ app.delete('/api/reservations/:id', checkRole(['user', 'admin']), (req, res) => 
 
 // ADMINISTRATOR
 
-// Dodanie obiektu
-app.post('/api/admin/pitches', checkRole(['admin']), (req, res) => {
+// Dodanie nowego obiektu
+app.post('/api/admin/courts', checkRole(['admin']), (req, res) => {
   const { name } = req.body;
-  const newPitch = { id: `P${pitches.length + 1}`, name, status: 'available' };
-  pitches.push(newPitch);
-  res.status(201).json(newPitch);
+
+  const newCourt = { id: courts.length + 1, name, status: 'available' };
+  courts.push(newCourt);
+  res.status(201).json(newCourt);
 });
 
 // Aktualizacja obiektu
-app.put('/api/admin/pitches/:id', checkRole(['admin']), (req, res, next) => {
-  const index = pitches.findIndex(p => p.id === parseInt(req.params.id));
+app.put('/api/admin/courts/:id', checkRole(['admin']), (req, res, next) => {
+  const index = courts.findIndex(p => p.id === parseInt(req.params.id));
   if (index === -1) return next(new AppError('Nie znaleziono obiektu do aktualizacji', 404));
 
-  pitches[index] = { ...pitches[index], ...req.body };
-  res.status(200).json(pitches[index]);
+  courts[index] = { ...courts[index], ...req.body };
+  res.status(200).json(courts[index]);
 });
 
 // Zarządzanie grafikiem
-app.patch('/api/admin/pitches/:id/schedule', checkRole(['admin']), (req, res) => {
+app.patch('/api/admin/courts/:id/schedule', checkRole(['admin']), (req, res) => {
   res.json({ message: "Grafik zaktualizowany" });
 });
 
