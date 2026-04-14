@@ -3,9 +3,20 @@ const app = express();
 app.use(express.json());
 
 // przykładowe dane
-let pitches = [{ id: 'A1', name: 'Boisko Orlik', status: 'available' }];
+let pitches = [
+    { id: 1, name: 'Boisko Orlik', status: 'available' },
+    { id: 2, name: "Kort Tenisowy", status: 'available' }];
 let reservations = [];
 let users = []; // Role: 'guest', 'user', 'admin'
+
+
+// klasa obsługi błędów
+class AppError extends Error {
+  constructor(message, statusCode) {
+    super(message);
+    this.statusCode = statusCode;
+  }
+}
 
 // autoryzacja
 const checkRole = (role) => (req, res, next) => {
@@ -17,11 +28,27 @@ const checkRole = (role) => (req, res, next) => {
   }
 };
 
+// middleware do obsługi błędów
+const errorHandler = (err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  res.status(statusCode).json({
+    status: 'error',
+    message: err.message || 'Wewnętrzny błąd serwera'
+  });
+};
+
 // UŻYTKOWNIK NIEZALOGOWANY
 
 // Przeglądanie boisk
 app.get('/api/pitches', (req, res) => {
-  res.json(pitches);
+  res.status(200).json(pitches);
+});
+
+// Pokaż obiekt o podanym id
+app.get('/api/pitches/:id', (req, res, next) => {
+  const pitch = pitches.find(p => p.id === parseInt(req.params.id));
+  if (!pitch) return next(new AppError('Nie znaleziono boiska o podanym ID', 404));
+  res.status(200).json(pitch);
 });
 
 // Rejestracja / Logowanie
@@ -54,12 +81,21 @@ app.delete('/api/reservations/:id', checkRole(['user', 'admin']), (req, res) => 
 
 // ADMINISTRATOR
 
-// Zarządzanie obiektami
+// Dodanie obiektu
 app.post('/api/admin/pitches', checkRole(['admin']), (req, res) => {
   const { name } = req.body;
   const newPitch = { id: `P${pitches.length + 1}`, name, status: 'available' };
   pitches.push(newPitch);
   res.status(201).json(newPitch);
+});
+
+// Aktualizacja obiektu
+app.put('/api/admin/pitches/:id', checkRole(['admin']), (req, res, next) => {
+  const index = pitches.findIndex(p => p.id === parseInt(req.params.id));
+  if (index === -1) return next(new AppError('Nie znaleziono obiektu do aktualizacji', 404));
+
+  pitches[index] = { ...pitches[index], ...req.body };
+  res.status(200).json(pitches[index]);
 });
 
 // Zarządzanie grafikiem
@@ -68,4 +104,4 @@ app.patch('/api/admin/pitches/:id/schedule', checkRole(['admin']), (req, res) =>
 });
 
 const PORT = 3000;
-app.listen(PORT, () => console.log(`System działa zgodnie z modelem na porcie ${PORT}`));
+app.listen(PORT, () => console.log(`System działa na porcie ${PORT}`));
