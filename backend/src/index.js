@@ -1,13 +1,11 @@
 const express = require('express');
+const mongoose = require('mongoose');
+const Court = require('../models/Court');
+const Reservation = require('../models/Reservation');
 const app = express();
 app.use(express.json());
 
-// przykładowe dane
-let courts = [
-    { id: 1, name: 'Boisko Orlik', status: 'available' },
-    { id: 2, name: "Kort Tenisowy", status: 'available' }];
-let reservations = [];
-let users = []; // Role: 'guest', 'user', 'admin'
+mongoose.connect('mongodb+srv://user0:1234@cluster0.lo4yax1.mongodb.net/project?appName=Cluster0')
 
 
 // klasa obsługi błędów
@@ -40,15 +38,20 @@ const errorHandler = (err, req, res, next) => {
 // UŻYTKOWNIK NIEZALOGOWANY
 
 // Przeglądanie boisk
-app.get('/api/courts', (req, res) => {
-  res.status(200).json(courts);
+app.get('/api/courts', async (req, res) => {
+  const allCourts = await Court.find();
+  res.status(200).json(allCourts);
 });
 
 // Pokaż obiekt o podanym id
-app.get('/api/courts/:id', (req, res, next) => {
-  const court = courts.find(p => p.id === parseInt(req.params.id));
-  if (!court) return next(new AppError('Nie znaleziono boiska o podanym ID', 404));
-  res.status(200).json(court);
+app.get('/api/courts/:id', async (req, res, next) => {
+  try {
+    const court = await Court.findById(req.params.id);
+    if (!court) return next(new AppError('Nie znaleziono boiska o podanym ID', 404));
+    res.status(200).json(court);
+  } catch (err) {
+    next(new AppError('Nieprawidłowy format ID', 400));
+  }
 });
 
 // Rejestracja / Logowanie
@@ -61,50 +64,73 @@ app.post('/api/auth/register', (req, res) => {
 // UŻYTKOWNIK ZALOGOWANY
 
 // Dokonywanie rezerwacji + Płatność online
-app.post('/api/reservations', checkRole(['user', 'admin']), (req, res) => {
-  const { courtId, start, end } = req.body;
+app.post('/api/reservations', checkRole(['user', 'admin']), async (req, res, next) => {
+  try {
+    const { courtId, start, end } = req.body;
+    const startTime = new Date(start);
+    const endTime = new Date(end);
 
-  const newRes = { id: Date.now(), courtId, start, end, paid: false, userId: 'current-user' };
+    const conflict = await Reservation.findOne({
+      courtId: courtId,
+      $and: [
+        { start: { $lt: endTime } },
+        { end: { $gt: startTime } }
+      ]
+    });
 
-  newRes.paid = true;
+    if (conflict) {
+      return next(new AppError('Ten termin jest już zarezerwowany', 409));
+    }
 
-  reservations.push(newRes);
-  res.status(201).json({ message: "Zarezerwowano i opłacono", data: newRes });
+    const newRes = new Reservation({
+      courtId,
+      start: startTime,
+      end: endTime,
+      paid: true
+    });
+
+    await newRes.save();
+    res.status(201).json({ message: "Zarezerwowano i opłacono", data: newRes });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Anulowanie rezerwacji
-app.delete('/api/reservations/:id', checkRole(['user', 'admin']), (req, res) => {
-  const { id } = req.params;
-  reservations = reservations.filter(r => r.id !== parseInt(id));
+app.delete('/api/reservations/:id', checkRole(['user', 'admin']), async (req, res) => {
+  await Reservation.findByIdAndDelete(req.params.id);
   res.json({ message: "Rezerwacja anulowana" });
 });
 
 // ADMINISTRATOR
 
 // Dodanie nowego obiektu
-app.post('/api/admin/courts', checkRole(['admin']), (req, res) => {
-  const { name } = req.body;
-
-  const newCourt = { id: courts.length + 1, name, status: 'available' };
-  courts.push(newCourt);
+app.post('/api/admin/courts', checkRole(['admin']), async (req, res) => {
+  const newCourt = new Court(req.body);
+  await newCourt.save();
   res.status(201).json(newCourt);
 });
 
 // Aktualizacja obiektu
-app.put('/api/admin/courts/:id', checkRole(['admin']), (req, res, next) => {
-  const index = courts.findIndex(p => p.id === parseInt(req.params.id));
-  if (index === -1) return next(new AppError('Nie znaleziono obiektu do aktualizacji', 404));
-
-  courts[index] = { ...courts[index], ...req.body };
-  res.status(200).json(courts[index]);
+app.put('/api/admin/courts/:id', checkRole(['admin']), async (req, res, next) => {
+  try {
+    const updatedCourt = await Court.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updatedCourt) return next(new AppError('Nie znaleziono obiektu', 404));
+    res.status(200).json(updatedCourt);
+  } catch (err) {
+    next(err);
+  }
 });
 
-app.delete('/api/admin/courts/:id', checkRole(['admin']), (req, res, next) => {
-  const index = courts.findIndex(p => p.id === parseInt(req.params.id));
-  if (index === -1) return next(new AppError('Nie można usunąć – obiekt nie istnieje', 404));
-
-  courts.splice(index, 1);
-  res.status(204).send();
+// Usuwanie obiektu
+app.delete('/api/admin/courts/:id', checkRole(['admin']), async (req, res, next) => {
+  try {
+    const deleted = await Court.findByIdAndDelete(req.params.id);
+    if (!deleted) return next(new AppError('Nie znaleziono obiektu', 404));
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Zarządzanie grafikiem
