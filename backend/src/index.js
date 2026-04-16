@@ -3,9 +3,20 @@ const app = express();
 app.use(express.json());
 
 // przykładowe dane
-let pitches = [{ id: 'A1', name: 'Boisko Orlik', status: 'available' }];
+let courts = [
+    { id: 1, name: 'Boisko Orlik', status: 'available' },
+    { id: 2, name: "Kort Tenisowy", status: 'available' }];
 let reservations = [];
 let users = []; // Role: 'guest', 'user', 'admin'
+
+
+// klasa obsługi błędów
+class AppError extends Error {
+  constructor(message, statusCode) {
+    super(message);
+    this.statusCode = statusCode;
+  }
+}
 
 // autoryzacja
 const checkRole = (role) => (req, res, next) => {
@@ -17,11 +28,27 @@ const checkRole = (role) => (req, res, next) => {
   }
 };
 
+// middleware do obsługi błędów
+const errorHandler = (err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  res.status(statusCode).json({
+    status: 'error',
+    message: err.message || 'Wewnętrzny błąd serwera'
+  });
+};
+
 // UŻYTKOWNIK NIEZALOGOWANY
 
 // Przeglądanie boisk
-app.get('/api/pitches', (req, res) => {
-  res.json(pitches);
+app.get('/api/courts', (req, res) => {
+  res.status(200).json(courts);
+});
+
+// Pokaż obiekt o podanym id
+app.get('/api/courts/:id', (req, res, next) => {
+  const court = courts.find(p => p.id === parseInt(req.params.id));
+  if (!court) return next(new AppError('Nie znaleziono boiska o podanym ID', 404));
+  res.status(200).json(court);
 });
 
 // Rejestracja / Logowanie
@@ -35,9 +62,9 @@ app.post('/api/auth/register', (req, res) => {
 
 // Dokonywanie rezerwacji + Płatność online
 app.post('/api/reservations', checkRole(['user', 'admin']), (req, res) => {
-  const { pitchId, start, end } = req.body;
+  const { courtId, start, end } = req.body;
 
-  const newRes = { id: Date.now(), pitchId, start, end, paid: false, userId: 'current-user' };
+  const newRes = { id: Date.now(), courtId, start, end, paid: false, userId: 'current-user' };
 
   newRes.paid = true;
 
@@ -54,18 +81,36 @@ app.delete('/api/reservations/:id', checkRole(['user', 'admin']), (req, res) => 
 
 // ADMINISTRATOR
 
-// Zarządzanie obiektami
-app.post('/api/admin/pitches', checkRole(['admin']), (req, res) => {
+// Dodanie nowego obiektu
+app.post('/api/admin/courts', checkRole(['admin']), (req, res) => {
   const { name } = req.body;
-  const newPitch = { id: `P${pitches.length + 1}`, name, status: 'available' };
-  pitches.push(newPitch);
-  res.status(201).json(newPitch);
+
+  const newCourt = { id: courts.length + 1, name, status: 'available' };
+  courts.push(newCourt);
+  res.status(201).json(newCourt);
+});
+
+// Aktualizacja obiektu
+app.put('/api/admin/courts/:id', checkRole(['admin']), (req, res, next) => {
+  const index = courts.findIndex(p => p.id === parseInt(req.params.id));
+  if (index === -1) return next(new AppError('Nie znaleziono obiektu do aktualizacji', 404));
+
+  courts[index] = { ...courts[index], ...req.body };
+  res.status(200).json(courts[index]);
+});
+
+app.delete('/api/admin/courts/:id', checkRole(['admin']), (req, res, next) => {
+  const index = courts.findIndex(p => p.id === parseInt(req.params.id));
+  if (index === -1) return next(new AppError('Nie można usunąć – obiekt nie istnieje', 404));
+
+  courts.splice(index, 1);
+  res.status(204).send();
 });
 
 // Zarządzanie grafikiem
-app.patch('/api/admin/pitches/:id/schedule', checkRole(['admin']), (req, res) => {
+app.patch('/api/admin/courts/:id/schedule', checkRole(['admin']), (req, res) => {
   res.json({ message: "Grafik zaktualizowany" });
 });
 
 const PORT = 3000;
-app.listen(PORT, () => console.log(`System działa zgodnie z modelem na porcie ${PORT}`));
+app.listen(PORT, () => console.log(`System działa na porcie ${PORT}`));
