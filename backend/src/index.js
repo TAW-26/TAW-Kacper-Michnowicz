@@ -99,6 +99,14 @@ app.put('/api/admin/courts/:id', checkRole(['admin']), (req, res, next) => {
   res.status(200).json(courts[index]);
 });
 
+app.delete('/api/admin/courts/:id', checkRole(['admin']), (req, res, next) => {
+  const index = courts.findIndex(p => p.id === parseInt(req.params.id));
+  if (index === -1) return next(new AppError('Nie można usunąć – obiekt nie istnieje', 404));
+
+  courts.splice(index, 1);
+  res.status(204).send();
+});
+
 // Zarządzanie grafikiem
 app.patch('/api/admin/courts/:id/schedule', checkRole(['admin']), (req, res) => {
   res.json({ message: "Grafik zaktualizowany" });
