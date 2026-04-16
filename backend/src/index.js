@@ -1,13 +1,11 @@
 const express = require('express');
+const mongoose = require('mongoose');
+const Court = require('../models/Court');
+const Reservation = require('../models/Reservation');
 const app = express();
 app.use(express.json());
 
-// przykładowe dane
-let courts = [
-    { id: 1, name: 'Boisko Orlik', status: 'available' },
-    { id: 2, name: "Kort Tenisowy", status: 'available' }];
-let reservations = [];
-let users = []; // Role: 'guest', 'user', 'admin'
+mongoose.connect('mongodb+srv://user0:1234@cluster0.lo4yax1.mongodb.net/project?appName=Cluster0')
 
 
 // klasa obsługi błędów
@@ -40,8 +38,9 @@ const errorHandler = (err, req, res, next) => {
 // UŻYTKOWNIK NIEZALOGOWANY
 
 // Przeglądanie boisk
-app.get('/api/courts', (req, res) => {
-  res.status(200).json(courts);
+app.get('/api/courts', async (req, res) => {
+  const allCourts = await Court.find();
+  res.status(200).json(allCourts);
 });
 
 // Pokaż obiekt o podanym id
