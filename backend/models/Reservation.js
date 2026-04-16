@@ -8,4 +8,4 @@ const reservationSchema = new mongoose.Schema({
   userId: { type: String, default: 'current-user' }
 });
 
-module.exports = mongoose.model('Reservation', reservationSchema, 'reservations');
+module.exports = mongoose.model('Reservation', reservationSchema);

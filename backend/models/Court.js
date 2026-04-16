@@ -5,4 +5,4 @@ const courtSchema = new mongoose.Schema({
   status: { type: String, default: 'available' }
 });
 
-module.exports = mongoose.model('Court', courtSchema, 'courts');
+module.exports = mongoose.model('Court', courtSchema);
