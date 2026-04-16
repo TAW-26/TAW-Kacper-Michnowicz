@@ -2,10 +2,49 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Court = require('../models/Court');
 const Reservation = require('../models/Reservation');
+
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const User = require('../models/User');
+
 const app = express();
 app.use(express.json());
 
 mongoose.connect('mongodb+srv://user0:1234@cluster0.lo4yax1.mongodb.net/project?appName=Cluster0')
+
+
+
+const JWT_SECRET = 'tajny_klucz_123';
+
+// rejestracja
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { username, password, role } = req.body;
+    const user = new User({ username, password, role });
+    await user.save();
+    res.status(201).json({ message: "Użytkownik zarejestrowany" });
+  } catch (err) {
+    res.status(400).json({ error: "Użytkownik już istnieje lub błąd danych" });
+  }
+});
+
+// logowanie
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+  const user = await User.findOne({ username });
+
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    return res.status(401).json({ error: "Błędny login lub hasło" });
+  }
+
+  const token = jwt.sign(
+    { id: user._id, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+
+  res.json({ token });
+});
 
 
 // klasa obsługi błędów
@@ -16,14 +55,28 @@ class AppError extends Error {
   }
 }
 
-// autoryzacja
-const checkRole = (role) => (req, res, next) => {
-  const userRole = req.headers['x-role'] || 'guest';
-  if (role.includes(userRole)) {
-    next();
-  } else {
-    res.status(403).json({ error: "Brak uprawnień do tej akcji." });
-  }
+const protect = (roles = []) => {
+  return async (req, res, next) => {
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) return res.status(401).json({ error: "Brak dostępu. Zaloguj się." });
+
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+
+      if (roles.length && !roles.includes(decoded.role)) {
+        return res.status(403).json({ error: "Brak uprawnień do tej akcji" });
+      }
+
+      req.user = decoded;
+      next();
+    } catch (err) {
+      res.status(401).json({ error: "Nieprawidłowy token" });
+    }
+  };
 };
 
 // middleware do obsługi błędów
@@ -54,17 +107,10 @@ app.get('/api/courts/:id', async (req, res, next) => {
   }
 });
 
-// Rejestracja / Logowanie
-app.post('/api/auth/register', (req, res) => {
-  const { username } = req.body;
-  users.push({ username, role: 'user' });
-  res.status(201).json({ message: "Zarejestrowano pomyślnie" });
-});
-
 // UŻYTKOWNIK ZALOGOWANY
 
 // Dokonywanie rezerwacji + Płatność online
-app.post('/api/reservations', checkRole(['user', 'admin']), async (req, res, next) => {
+app.post('/api/reservations', protect(['user', 'admin']), async (req, res, next) => {
   try {
     const { courtId, start, end } = req.body;
     const startTime = new Date(start);
@@ -97,7 +143,7 @@ app.post('/api/reservations', checkRole(['user', 'admin']), async (req, res, nex
 });
 
 // Anulowanie rezerwacji
-app.delete('/api/reservations/:id', checkRole(['user', 'admin']), async (req, res) => {
+app.delete('/api/reservations/:id', protect(['user', 'admin']), async (req, res) => {
   await Reservation.findByIdAndDelete(req.params.id);
   res.json({ message: "Rezerwacja anulowana" });
 });
@@ -105,14 +151,14 @@ app.delete('/api/reservations/:id', checkRole(['user', 'admin']), async (req, re
 // ADMINISTRATOR
 
 // Dodanie nowego obiektu
-app.post('/api/admin/courts', checkRole(['admin']), async (req, res) => {
+app.post('/api/admin/courts', protect(['admin']), async (req, res) => {
   const newCourt = new Court(req.body);
   await newCourt.save();
   res.status(201).json(newCourt);
 });
 
 // Aktualizacja obiektu
-app.put('/api/admin/courts/:id', checkRole(['admin']), async (req, res, next) => {
+app.put('/api/admin/courts/:id', protect(['admin']), async (req, res, next) => {
   try {
     const updatedCourt = await Court.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updatedCourt) return next(new AppError('Nie znaleziono obiektu', 404));
@@ -123,7 +169,7 @@ app.put('/api/admin/courts/:id', checkRole(['admin']), async (req, res, next) =>
 });
 
 // Usuwanie obiektu
-app.delete('/api/admin/courts/:id', checkRole(['admin']), async (req, res, next) => {
+app.delete('/api/admin/courts/:id', protect(['admin']), async (req, res, next) => {
   try {
     const deleted = await Court.findByIdAndDelete(req.params.id);
     if (!deleted) return next(new AppError('Nie znaleziono obiektu', 404));
@@ -134,7 +180,7 @@ app.delete('/api/admin/courts/:id', checkRole(['admin']), async (req, res, next)
 });
 
 // Zarządzanie grafikiem
-app.patch('/api/admin/courts/:id/schedule', checkRole(['admin']), (req, res) => {
+app.patch('/api/admin/courts/:id/schedule', protect(['admin']), (req, res) => {
   res.json({ message: "Grafik zaktualizowany" });
 });
 
