@@ -4,52 +4,11 @@
     <div class="nav-links">
       <button class="btn ghost">Główna</button>
       <button class="btn ghost">Moje Rezerwacje</button>
-      <button class="btn" (click)="onLogin()">Zaloguj się</button>
+      <button class="btn" routerLink="/login">Zaloguj się</button>
     </div>
   </nav>
 
-  <header class="hero">
-    <h1>Znajdź idealne boisko w Twojej okolicy</h1>
-    <p>Rezerwuj online, graj ze znajomymi, bez zbędnych telefonów.</p>
-
-    <div class="search-bar">
-      <input type="text" placeholder="Szukaj po nazwie..." [(ngModel)]="searchQuery" (input)="filterCourts()">
-
-      <select [(ngModel)]="selectedType" (change)="filterCourts()">
-        <option value="all">Wszystkie typy</option>
-        <option value="Piłka nożna">Piłka nożna</option>
-        <option value="Tenis">Tenis</option>
-        <option value="Koszykówka">Koszykówka</option>
-      </select>
-      <button class="btn-search" (click)="filterCourts()">Szukaj</button>
-    </div>
-  </header>
-
-  <main class="content">
-    <div class="section-info" *ngIf="filteredCourts.length > 0">
-      <h2>Dostępne obiekty ({{ filteredCourts.length }})</h2>
-    </div>
-
-    <div class="no-results" *ngIf="filteredCourts.length === 0">
-      <p>Nie znaleziono boisk spełniających kryteria.</p>
-    </div>
-
-    <div class="courts-grid">
-      <div class="court-card" *ngFor="let court of filteredCourts">
-        <div class="court-image">
-          <span class="status-tag" [ngClass]="{'available': court.status === 'available'}">
-            {{ court.status === 'available' ? 'Dostępne' : 'Zajęte' }}
-          </span>
-        </div>
-        <div class="court-info">
-          <h3>{{ court.name }}</h3>
-          <p class="court-type">{{ court.type }}</p>
-          <div class="footer">
-            <span class="price">od 50 zł / h</span>
-            <button class="btn-details" (click)="goToDetails(court.id)">Szczegóły</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
+  <router-outlet></router-outlet>
 </div>
+
+
