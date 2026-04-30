@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { CourtService } from '../court';
 
 @Component({
   selector: 'app-home',
@@ -13,14 +14,20 @@ import { RouterModule } from '@angular/router';
 export class HomeComponent implements OnInit {
   searchQuery: string = '';
   selectedType: string = 'all';
-  courts = [
-    { id: '1', name: 'Orlik przy Szkole nr 5', type: 'Piłka nożna', status: 'available' },
-    { id: '2', name: 'Korty Tenisowe "Sokół"', type: 'Tenis', status: 'booked' },
-    { id: '3', name: 'Hala Sportowa Arena', type: 'Koszykówka', status: 'available' }
-  ];
-  filteredCourts = [...this.courts];
+  courts: any[] = [];
+  filteredCourts: any[] = [];
 
-  ngOnInit() { this.filteredCourts = [...this.courts]; }
+  constructor(private courtService: CourtService) {}
+
+  ngOnInit() {
+    this.courtService.getCourts().subscribe({
+      next: (data) => {
+        this.courts = data;
+        this.filteredCourts = data;
+      },
+      error: (err) => console.error('Błąd pobierania danych:', err)
+    });
+  }
 
   filterCourts() {
     this.filteredCourts = this.courts.filter(court => {

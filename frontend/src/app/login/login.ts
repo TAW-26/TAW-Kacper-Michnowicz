@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -18,19 +20,19 @@ export class LoginComponent {
   errorMessage: string = '';
   isLoading: boolean = false;
 
+  constructor(
+      private http: HttpClient,
+      private router: Router
+    ) {}
+
   onLogin() {
-    this.isLoading = true;
-    this.errorMessage = '';
-
-    console.log('Próba logowania dla:', this.loginData.username);
-
-    setTimeout(() => {
-      if (this.loginData.username === 'admin' && this.loginData.password === 'admin123') {
-        alert('Zalogowano pomyślnie!');
-      } else {
-        this.errorMessage = 'Błędny login lub hasło. Spróbuj ponownie.';
-      }
-      this.isLoading = false;
-    }, 1500);
+    this.http.post('http://localhost:3000/api/auth/login', this.loginData).subscribe({
+      next: (res: any) => {
+        localStorage.setItem('token', res.token);
+        alert('Zalogowano!');
+        this.router.navigate(['/']);
+      },
+      error: (err) => this.errorMessage = 'Błąd logowania'
+    });
   }
 }
