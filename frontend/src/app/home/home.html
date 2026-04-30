@@ -36,7 +36,7 @@
         <p class="court-type">{{ court.type }}</p>
         <div class="footer">
           <span class="price">od 50 zł / h</span>
-          <button class="btn-details">Szczegóły</button>
+          <button class="btn-details" [routerLink]="['/court', court.id]">Szczegóły</button>
         </div>
       </div>
     </div>
