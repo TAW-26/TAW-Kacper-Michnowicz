@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const Court = require('../models/Court');
@@ -9,11 +11,12 @@ const User = require('../models/User');
 
 const cors = require('cors');
 
-app.use(cors());
+
 const app = express();
 app.use(express.json());
+app.use(cors());
 
-mongoose.connect('mongodb+srv://user0:1234@cluster0.lo4yax1.mongodb.net/project?appName=Cluster0')
+mongoose.connect(process.env.MONGO_URI)
 
 
 

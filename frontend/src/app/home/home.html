@@ -26,19 +26,27 @@
 
   <div class="courts-grid">
     <div class="court-card" *ngFor="let court of filteredCourts">
+
       <div class="court-image">
-          <span class="status-tag" [ngClass]="{'available': court.status === 'available'}">
-            {{ court.status === 'available' ? 'Dostępne' : 'Zajęte' }}
-          </span>
+        <img
+          [src]="court.image"
+          alt="Zdjęcie obiektu: {{ court.name }}"
+          class="court-img-fallback"
+        />
+
+        <span class="status-tag" [ngClass]="{'available': court.status === 'available' || court.status === 'Dostępne'}">
+      {{ court.status }}
+    </span>
       </div>
+
       <div class="court-info">
         <h3>{{ court.name }}</h3>
-        <p class="court-type">{{ court.type }}</p>
         <div class="footer">
           <span class="price">od 50 zł / h</span>
-          <button class="btn-details" [routerLink]="['/court', court.id]">Szczegóły</button>
+          <button class="btn-details" [routerLink]="['/court', court._id || court.id]">Szczegóły</button>
         </div>
       </div>
+
     </div>
   </div>
 </main>
