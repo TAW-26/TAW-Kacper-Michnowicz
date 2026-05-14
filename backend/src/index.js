@@ -18,9 +18,7 @@ app.use(cors());
 
 mongoose.connect(process.env.MONGO_URI)
 
-
-
-const JWT_SECRET = 'tajny_klucz_123';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // rejestracja
 app.post('/api/auth/register', async (req, res) => {
