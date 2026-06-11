@@ -19,4 +19,7 @@ export class CourtService {
   postReservation(reservation: any): Observable<any> {
     return this.http.post('http://localhost:3000/api/reservations', reservation);
   }
+  register(userData: any): Observable<any> {
+      return this.http.post(`${this.apiUrl}/register`, userData);
+    }
 }
