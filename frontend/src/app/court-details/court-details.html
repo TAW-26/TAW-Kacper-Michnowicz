@@ -1,22 +1,27 @@
-<div class="details-container">
+<div class="details-container" *ngIf="court">
+
   <button class="btn-back" routerLink="/">← Powrót do listy</button>
 
   <div class="details-grid">
     <section class="info-section">
-      <div class="image-placeholder"></div>
-      <h1>{{ court.name }}</h1>
-      <p class="badge">{{ court.type }}</p>
 
-      <div class="description">
-        <h3>O obiekcie</h3>
-        <p>{{ court.description }}</p>
-        <p><strong>Adres:</strong> {{ court.address }}</p>
+      <h1>{{ court.name }}</h1>
+
+      <p class="badge" *ngIf="court.status">{{ court.status }}</p>
+
+      <div class="image-container" style="margin-top: 20px;">
+        <img
+          [src]="court.image || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=1200&auto=format&fit=crop'"
+          alt="Zdjęcie obiektu: {{ court.name }}"
+          class="court-detail-img"
+          style="width: 100%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
+        >
       </div>
+
     </section>
 
     <section class="booking-card">
       <h2>Zarezerwuj termin</h2>
-      <p class="price-info">Cena: <strong>{{ court.price }} zł</strong> / godzina</p>
 
       <form (ngSubmit)="onSubmitReservation()" #bookingForm="ngForm">
         <div class="form-group">
@@ -35,14 +40,11 @@
           </div>
         </div>
 
-        <div class="summary" *ngIf="reservation.date && reservation.startTime">
-          <p>Podsumowanie: 1h - <strong>{{ court.price }} zł</strong></p>
-        </div>
-
         <button type="submit" class="btn-book" [disabled]="!bookingForm.valid">
           Zarezerwuj teraz
         </button>
       </form>
     </section>
   </div>
+
 </div>
