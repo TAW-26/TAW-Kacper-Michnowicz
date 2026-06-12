@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CourtService } from '../court';
+import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -12,28 +13,48 @@ import { CourtService } from '../court';
   styleUrl: './home.css'
 })
 export class HomeComponent implements OnInit {
-  searchQuery: string = '';
-  selectedType: string = 'all';
-  courts: any[] = [];
-  filteredCourts: any[] = [];
+  // Strumienie dla filtrów
+  search$ = new BehaviorSubject<string>('');
+  type$ = new BehaviorSubject<string>('all');
+
+  // Główny strumień z danymi, który połączy filtry i boiska
+  filteredCourts$!: Observable<any[]>;
+  username: string | null = null;
 
   constructor(private courtService: CourtService) {}
 
   ngOnInit() {
-    this.courtService.getCourts().subscribe({
-      next: (data) => {
-        this.courts = data;
-        this.filteredCourts = data;
-      },
-      error: (err) => console.error('Błąd pobierania danych:', err)
+    // Obsługa użytkownika
+    this.courtService.currentUser$.subscribe(user => {
+      this.username = user;
     });
+
+    // Reaktywny strumień boisk połączony z filtrami
+    this.filteredCourts$ = combineLatest([
+      this.courtService.getCourts(),
+      this.search$,
+      this.type$
+    ]).pipe(
+      map(([courts, search, type]) => {
+        return courts.filter(court => {
+          const matchesSearch = court.name.toLowerCase().includes(search.toLowerCase());
+          const matchesType = type === 'all' || court.type === type;
+          return matchesSearch && matchesType;
+        });
+      })
+    );
   }
 
-  filterCourts() {
-    this.filteredCourts = this.courts.filter(court => {
-      const matchesSearch = court.name.toLowerCase().includes(this.searchQuery.toLowerCase());
-      const matchesType = this.selectedType === 'all' || court.type === this.selectedType;
-      return matchesSearch && matchesType;
-    });
+  // Funkcje wywoływane przez (input) i (change) w HTML-u
+  onSearchChange(value: string) {
+    this.search$.next(value);
+  }
+
+  onTypeChange(value: string) {
+    this.type$.next(value);
+  }
+
+  logout() {
+    this.courtService.logout();
   }
 }

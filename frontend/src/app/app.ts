@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { CourtService } from './court'; // Upewnij się, że ścieżka do court.ts jest poprawna
+import { CourtService } from './court';
 
 interface Court {
   id: string;

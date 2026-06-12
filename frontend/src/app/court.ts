@@ -29,14 +29,11 @@ export class CourtService {
     }
   }
 
-  // ==========================================
-  // TO TEJ METODY BRAKOWAŁO W TWOIM SERWISIE:
-  // ==========================================
   register(userData: any): Observable<any> {
     return this.http.post(`${this.authUrl}/register`, userData);
   }
 
-  // --- LOGOWANIE (TEKST JAWNY - BEZ BCRYPT) ---
+  // --- LOGOWANIE ---
   login(loginData: any): Observable<any> {
     return this.http.post(`${this.authUrl}/login`, loginData).pipe(
       tap((res: any) => {

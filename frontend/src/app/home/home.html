@@ -1,55 +1,43 @@
 <header class="hero">
   <h1>Znajdź idealne boisko w Twojej okolicy</h1>
-  <p>Rezerwuj online, graj ze znajomymi, bez zbędnych telefonów.</p>
-
   <div class="search-bar">
-    <input type="text" placeholder="Szukaj po nazwie..." [(ngModel)]="searchQuery" (input)="filterCourts()">
+    <input type="text" placeholder="Szukaj po nazwie..." [ngModel]="search$.value" (input)="onSearchChange($any($event.target).value)">
 
-    <select [(ngModel)]="selectedType" (change)="filterCourts()">
+    <select [ngModel]="type$.value" (change)="onTypeChange($any($event.target).value)">
       <option value="all">Wszystkie typy</option>
       <option value="Piłka nożna">Piłka nożna</option>
       <option value="Tenis">Tenis</option>
       <option value="Koszykówka">Koszykówka</option>
     </select>
-    <button class="btn-search" (click)="filterCourts()">Szukaj</button>
   </div>
 </header>
 
-<main class="content">
-  <div class="section-info" *ngIf="filteredCourts.length > 0">
-    <h2>Dostępne obiekty ({{ filteredCourts.length }})</h2>
+<main class="content" *ngIf="filteredCourts$ | async as courts; else loading">
+
+  <div class="section-info" *ngIf="courts.length > 0">
+    <h2>Dostępne obiekty ({{ courts.length }})</h2>
   </div>
 
-  <div class="no-results" *ngIf="filteredCourts.length === 0">
+  <div class="no-results" *ngIf="courts.length === 0">
     <p>Nie znaleziono boisk spełniających kryteria.</p>
   </div>
 
   <div class="courts-grid">
-    <div class="court-card" *ngFor="let court of filteredCourts">
-
+    <div class="court-card" *ngFor="let court of courts">
       <div class="court-image">
-        <img
-          [src]="court.image || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop'"
-          alt="Zdjęcie obiektu: {{ court.name }}"
-          class="court-img-fallback"
-        />
-
-        <span class="status-tag" [ngClass]="{'available': court.status === 'available' || court.status === 'Dostępne'}">
-          {{ court.status }}
-        </span>
+        <img [src]="court.image || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop'" alt="{{ court.name }}" />
       </div>
-
       <div class="court-info">
         <h3>{{ court.name }}</h3>
         <div class="footer">
           <span class="price">od 50 zł / h</span>
-
-          <button class="btn-details" [routerLink]="['/court', court._id || court.id]">
-            Szczegóły
-          </button>
+          <button class="btn-details" [routerLink]="['/court', court._id || court.id]">Szczegóły</button>
         </div>
       </div>
-
     </div>
   </div>
 </main>
+
+<ng-template #loading>
+  <p style="text-align: center; margin-top: 50px;">Ładowanie obiektów sportowych...</p>
+</ng-template>

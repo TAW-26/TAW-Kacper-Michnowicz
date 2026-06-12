@@ -1,4 +1,4 @@
-<div class="details-container" *ngIf="court">
+<div class="details-container" *ngIf="court$ | async as court; else loading">
 
   <button class="btn-back" routerLink="/">← Powrót do listy</button>
 
@@ -48,3 +48,9 @@
   </div>
 
 </div>
+
+<ng-template #loading>
+  <div style="text-align: center; margin-top: 100px; font-size: 18px; color: #7f8c8d;">
+    Ładowanie szczegółów obiektu sportowego...
+  </div>
+</ng-template>
