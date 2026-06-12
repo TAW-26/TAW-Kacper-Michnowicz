@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { LoginComponent } from './login/login';
+import { CourtService } from './court'; // Upewnij się, że ścieżka do court.ts jest poprawna
 
 interface Court {
   id: string;
@@ -18,7 +17,24 @@ interface Court {
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
+export class App implements OnInit {
+  // Zmienna przechowująca nazwę zalogowanego użytkownika
+  username: string | null = null;
 
-export class App {
+  // Wstrzykujemy CourtService w konstruktorze
+  constructor(private courtService: CourtService) {}
 
+  ngOnInit() {
+    // Nasłuchujemy zmian statusu logowania.
+    // Gdy użytkownik się zaloguje, ten kod natychmiast przypisze jego login do zmiennej.
+    this.courtService.currentUser$.subscribe(user => {
+      this.username = user;
+      console.log('Główny pasek nawigacji wykrył użytkownika:', this.username);
+    });
+  }
+
+  // Funkcja przypisana do przycisku "Wyloguj się"
+  logout() {
+    this.courtService.logout();
+  }
 }

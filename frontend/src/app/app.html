@@ -1,14 +1,20 @@
 <div class="app-container">
   <nav class="navbar">
-    <div class="logo">⚽ SportReserve</div>
+    <div class="logo" routerLink="/" style="cursor: pointer;">⚽ SportReserve</div>
     <div class="nav-links">
       <button class="btn ghost" routerLink="/">Główna</button>
-      <button class="btn ghost" routerLink="/profile">Profil</button>
-      <button class="btn" routerLink="/login">Zaloguj się</button>
+
+      <ng-container *ngIf="username">
+        <button class="btn ghost" routerLink="/profile">👤 {{ username }}</button>
+        <button class="btn logout-btn" (click)="logout()">Wyloguj się</button>
+      </ng-container>
+
+      <ng-container *ngIf="!username">
+        <button class="btn ghost" routerLink="/login">Profil</button>
+        <button class="btn" routerLink="/login">Zaloguj się</button>
+      </ng-container>
     </div>
   </nav>
 
   <router-outlet></router-outlet>
 </div>
-
-
