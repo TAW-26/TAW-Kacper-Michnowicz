@@ -34,20 +34,31 @@ app.post('/api/auth/register', async (req, res) => {
 
 // logowanie
 app.post('/api/auth/login', async (req, res) => {
-  const { username, password } = req.body;
-  const user = await User.findOne({ username });
+  try {
+    const { username, password } = req.body;
+    console.log("Próba logowania (tekst jawny) dla:", username);
 
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-    return res.status(401).json({ error: "Błędny login lub hasło" });
+    // Szukamy użytkownika w bazie po loginie
+    const user = await User.findOne({ username });
+
+    // Porównujemy hasło za pomocą zwykłego "===" zamiast bcrypt
+    if (!user || user.password !== password) {
+      return res.status(401).json({ error: "Błędny login lub hasło" });
+    }
+
+    // Jeśli dane są poprawne, generujemy token JWT
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    return res.status(200).json({ token });
+
+  } catch (err) {
+    console.error("Błąd serwera podczas logowania:", err);
+    return res.status(500).json({ error: "Wewnętrzny błąd serwera" });
   }
-
-  const token = jwt.sign(
-    { id: user._id, role: user.role },
-    JWT_SECRET,
-    { expiresIn: '1h' }
-  );
-
-  res.json({ token });
 });
 
 
