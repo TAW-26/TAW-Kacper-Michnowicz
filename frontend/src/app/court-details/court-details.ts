@@ -24,7 +24,7 @@ export class CourtDetailsComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private courtService: CourtService,
+    public courtService: CourtService,
     private router: Router
   ) {}
 

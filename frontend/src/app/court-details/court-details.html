@@ -20,7 +20,7 @@
 
     </section>
 
-    <section class="booking-card">
+    <section class="booking-card" *ngIf="courtService.currentUser$ | async as loggedInUser; else loginRequired">
       <h2>Zarezerwuj termin</h2>
 
       <form (ngSubmit)="onSubmitReservation()" #bookingForm="ngForm">
@@ -45,6 +45,14 @@
         </button>
       </form>
     </section>
+
+    <ng-template #loginRequired>
+      <section class="booking-card alert-card" style="text-align: center; padding: 30px;">
+        <h2>Zarezerwuj termin</h2>
+        <p style="color: #7f8c8d; margin-bottom: 20px;">Musisz być zalogowany, aby dokonać rezerwacji tego obiektu.</p>
+        <button class="btn-book" routerLink="/login">Zaloguj się</button>
+      </section>
+    </ng-template>
   </div>
 
 </div>

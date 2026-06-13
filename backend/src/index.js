@@ -124,18 +124,21 @@ app.get('/api/courts/:id', async (req, res, next) => {
 
 // UŻYTKOWNIK ZALOGOWANY
 
-// Dokonywanie rezerwacji + Płatność online
+// Dokonywanie rezerwacji
 app.post('/api/reservations', protect(['user', 'admin']), async (req, res, next) => {
   try {
-    const { courtId, start, end } = req.body;
-    const startTime = new Date(start);
-    const endTime = new Date(end);
+    const { courtId, date, startTime, endTime } = req.body;
 
+    // Tworzymy pełne daty dla dotychczasowego walidatora konfliktów terminów
+    const startDateTime = new Date(`${date}T${startTime}`);
+    const endDateTime = new Date(`${date}T${endTime}`);
+
+    // Sprawdzanie konfliktów
     const conflict = await Reservation.findOne({
       courtId: courtId,
       $and: [
-        { start: { $lt: endTime } },
-        { end: { $gt: startTime } }
+        { start: { $lt: endDateTime } },
+        { end: { $gt: startDateTime } }
       ]
     });
 
@@ -143,15 +146,40 @@ app.post('/api/reservations', protect(['user', 'admin']), async (req, res, next)
       return next(new AppError('Ten termin jest już zarezerwowany', 409));
     }
 
+    // Zapis rezerwacji w globalnej kolekcji rezerwacji
     const newRes = new Reservation({
       courtId,
-      start: startTime,
-      end: endTime,
+      start: startDateTime,
+      end: endDateTime,
       paid: true
     });
-
     await newRes.save();
-    res.status(201).json({ message: "Zarezerwowano i opłacono", data: newRes });
+
+
+    const userId = req.user.id; // Wyciągnięte przez middleware "protect" z tokenu JWT
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return next(new AppError('Nie znaleziono zalogowanego użytkownika', 404));
+    }
+
+    // Dodajemy rezerwację w formacie czytelnym tekstowo do tablicy użytkownika
+    user.reservations.push({
+      courtId,
+      date,
+      startTime,
+      endTime,
+      bookedAt: new Date()
+    });
+
+    // Zapisujemy zaktualizowanego użytkownika w bazie MongoDB
+    await user.save();
+
+    res.status(201).json({
+      message: "Zarezerwowano, opłacono i przypisano do użytkownika",
+      data: newRes
+    });
+
   } catch (err) {
     next(err);
   }

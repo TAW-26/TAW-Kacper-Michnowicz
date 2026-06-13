@@ -1,6 +1,6 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -64,7 +64,17 @@ export class CourtService {
     return this.http.get<any>(`${this.apiUrl}/${id}`);
   }
 
+  // --- REZERWACJE ---
   postReservation(reservation: any): Observable<any> {
-    return this.http.post('http://localhost:3000/api/reservations', reservation);
+    let headers = new HttpHeaders();
+
+    if (this.isBrowser) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        headers = headers.set('Authorization', `Bearer ${token}`);
+      }
+    }
+
+    return this.http.post('http://localhost:3000/api/reservations', reservation, { headers });
   }
 }
