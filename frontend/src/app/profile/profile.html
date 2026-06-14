@@ -4,10 +4,8 @@
     <aside class="user-info-card">
       <div class="avatar-circle">{{ user.username[0] }}</div>
       <h2>{{ user.username }}</h2>
-      <p class="email">{{ user.email }}</p>
       <hr>
-      <p class="meta">Dołączył: {{ user.memberSince | date }}</p>
-      <button class="btn-logout">Wyloguj się</button>
+      <button class="btn-logout" (click)="logout()">Wyloguj się</button>
     </aside>
 
     <main class="reservations-section">
@@ -17,7 +15,7 @@
         <div class="res-item" *ngFor="let res of reservations" [class.cancelled]="res.status === 'cancelled'">
           <div class="res-details">
             <h3>{{ res.courtName }}</h3>
-            <p>📅 {{ res.date }} | ⏰ {{ res.time }}</p>
+            <p><b>Data:</b> {{ res.date }} | <b>Czas:</b> {{ res.time }}</p>
           </div>
 
           <div class="res-actions">

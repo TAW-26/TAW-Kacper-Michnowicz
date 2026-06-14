@@ -39,8 +39,7 @@ export class CourtDetailsComponent implements OnInit {
     );
   }
 
-  onSubmitReservation() {
-    // Przygotowujemy pełny obiekt rezerwacji dla backendu
+  onSubmitReservation(courtName: string) {
     const fullReservation = {
       courtId: this.courtId,
       date: this.reservation.date,
@@ -48,15 +47,31 @@ export class CourtDetailsComponent implements OnInit {
       endTime: this.reservation.endTime
     };
 
-    console.log('Wysyłanie rezerwacji na backend:', fullReservation);
-
     this.courtService.postReservation(fullReservation).subscribe({
       next: (res) => {
-        alert('Rezerwacja została pomyślnie zapisana!');
-        this.router.navigate(['/']); // Powrót na stronę główną po sukcesie
+        const currentUser = localStorage.getItem('username') || 'gosc';
+
+        // Pobieramy dotychczasowe rezerwacje zapisane w przeglądarce dla tego użytkownika
+        const localResKey = `reservations_${currentUser}`;
+        const existingReservations = JSON.parse(localStorage.getItem(localResKey) || '[]');
+
+        const newLocalRes = {
+          id: 'R' + (existingReservations.length + 1),
+          courtName: courtName,
+          date: this.reservation.date,
+          time: `${this.reservation.startTime} - ${this.reservation.endTime}`,
+          status: 'confirmed'
+        };
+
+        // Dodajemy do listy i zapisujemy z powrotem w localStorage
+        existingReservations.push(newLocalRes);
+        localStorage.setItem(localResKey, JSON.stringify(existingReservations));
+
+        alert('Obiekt został pomyślnie zarezerwowany!');
+        this.router.navigate(['/profile']); // Przekierowujemy od razu do profilu, żeby zobaczyć efekt!
       },
       error: (err) => {
-        console.error('Błąd podczas składania rezerwacji:', err);
+        console.error(err);
         alert('Nie udało się zapisać rezerwacji. Sprawdź poprawność danych.');
       }
     });

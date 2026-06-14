@@ -23,7 +23,7 @@
     <section class="booking-card" *ngIf="courtService.currentUser$ | async as loggedInUser; else loginRequired">
       <h2>Zarezerwuj termin</h2>
 
-      <form (ngSubmit)="onSubmitReservation()" #bookingForm="ngForm">
+      <form (ngSubmit)="onSubmitReservation(court.name)" #bookingForm="ngForm">
         <div class="form-group">
           <label>Data</label>
           <input type="date" name="date" [(ngModel)]="reservation.date" required>
