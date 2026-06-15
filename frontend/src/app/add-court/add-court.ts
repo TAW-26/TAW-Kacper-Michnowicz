@@ -15,8 +15,10 @@ export class AddCourtComponent {
   // Model danych odpowiadający Twojemu schematowi Court w bazie MongoDB
   courtData = {
     name: '',
-    type: 'Piłka nożna', // domyślna wartość zgodna z Twoim selectem
+    type: 'Piłka nożna',
+    pricePerHour: null,
     status: 'available',
+    description: '',
     image: ''
   };
 

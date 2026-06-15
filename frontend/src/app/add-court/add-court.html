@@ -25,6 +25,16 @@
       </select>
     </div>
 
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold;">Cena za godzinę (PLN)</label>
+      <input type="number" name="pricePerHour" [(ngModel)]="courtData.pricePerHour" min="0" required placeholder="np. 50" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold;">Opis obiektu</label>
+      <textarea name="description" [(ngModel)]="courtData.description" rows="4" placeholder="Wpisz krótki opis obiektu, wymiary, nawierzchnię, dostępne udogodnienia..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; font-family: inherit;"></textarea>
+    </div>
+
     <div style="margin-bottom: 20px;">
       <label style="display: block; margin-bottom: 5px; font-weight: bold;">Link do zdjęcia (URL)</label>
       <input type="text" name="image" [(ngModel)]="courtData.image" placeholder="https://images.unsplash.com/..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">

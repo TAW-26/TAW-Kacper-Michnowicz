@@ -5,19 +5,32 @@
   <div class="details-grid">
     <section class="info-section">
 
-      <h1>{{ court.name }}</h1>
+        <h1>{{ court.name }}</h1>
 
-      <p class="badge" *ngIf="court.status">{{ court.status }}</p>
+        <div class="image-container" style="margin-top: 20px;">
+          <img
+            [src]="court.image || 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimage.pngaaa.com%2F13%2F1887013-middle.png&f=1&nofb=1&ipt=5a6c1f59a6279ddcf7f64068397c3445e976526a16131363e2a28b135b691541'"
+            alt="Zdjęcie obiektu: {{ court.name }}"
+            class="court-detail-img"
+            style="width: 100%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
+          >
+        </div>
 
-      <div class="image-container" style="margin-top: 20px;">
-        <img
-          [src]="court.image || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=1200&auto=format&fit=crop'"
-          alt="Zdjęcie obiektu: {{ court.name }}"
-          class="court-detail-img"
-          style="width: 100%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
-        >
-      </div>
 
+        <div class="price-tag" style="margin: 10px 10px 10px 0; padding: 10px; background-color: #f8f9fa; border-radius: 4px; border-left: 4px solid #2ecc71;">
+          <span style="color: #7f8c8d; font-size: 14px;">Cena za godzinę:</span>
+          <strong style="font-size: 18px; color: #27ae60; float: right;">{{ court.pricePerHour || 0 }} PLN</strong>
+        </div>
+
+
+        <div class="court-description-box" style="margin-top: 25px; max-width: 600px; line-height: 1.6; color: #2c3e50;">
+          <h3 style="margin-bottom: 10px; font-size: 1.2rem; color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px;">
+            O obiekcie
+          </h3>
+          <p style="font-size: 15px; white-space: pre-line;">
+            {{ court.description || 'Brak dodatkowego opisu dla tego obiektu sportowego.' }}
+          </p>
+        </div>
     </section>
 
     <section class="booking-card" *ngIf="courtService.currentUser$ | async as loggedInUser; else loginRequired">

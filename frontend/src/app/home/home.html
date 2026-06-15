@@ -25,12 +25,12 @@
   <div class="courts-grid">
     <div class="court-card" *ngFor="let court of courts">
       <div class="court-image">
-        <img [src]="court.image || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop'" alt="{{ court.name }}" />
+        <img [src]="court.image || 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimage.pngaaa.com%2F13%2F1887013-middle.png&f=1&nofb=1&ipt=5a6c1f59a6279ddcf7f64068397c3445e976526a16131363e2a28b135b691541'" alt="{{ court.name }}" />
       </div>
       <div class="court-info">
         <h3>{{ court.name }}</h3>
         <div class="footer">
-          <span class="price">od 50 zł / h</span>
+          <span class="price">{{ court.pricePerHour || 0 }} zł / h</span>
           <button class="btn-details" [routerLink]="['/court', court._id || court.id]">Szczegóły</button>
         </div>
       </div>
