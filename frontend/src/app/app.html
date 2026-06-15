@@ -4,12 +4,18 @@
     <div class="nav-links">
       <button class="btn ghost" routerLink="/">Główna</button>
 
-      <ng-container *ngIf="username">
-        <button class="btn ghost" routerLink="/profile">👤 {{ username }}</button>
+      <ng-container *ngIf="currentUser">
+        <button class="btn ghost" routerLink="/profile">👤 {{ currentUser.username }}</button>
+
+        <button *ngIf="currentUser.role === 'admin'" class="btn admin-btn" routerLink="/admin/add-court">
+          ➕ Dodaj obiekt
+        </button>
+
         <button class="btn logout-btn" (click)="logout()">Wyloguj się</button>
       </ng-container>
 
-      <ng-container *ngIf="!username">
+      <ng-container *ngIf="!currentUser">
+        <button class="btn ghost" routerLink="/login">Profil</button>
         <button class="btn" routerLink="/login">Zaloguj się</button>
       </ng-container>
     </div>

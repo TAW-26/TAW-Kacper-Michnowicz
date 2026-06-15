@@ -18,8 +18,7 @@ interface Court {
   styleUrl: './app.css'
 })
 export class App implements OnInit {
-  // Zmienna przechowująca nazwę zalogowanego użytkownika
-  username: string | null = null;
+  currentUser: { username: string, role: string } | null = null;
 
   // Wstrzykujemy CourtService w konstruktorze
   constructor(private courtService: CourtService) {}
@@ -28,8 +27,7 @@ export class App implements OnInit {
     // Nasłuchujemy zmian statusu logowania.
     // Gdy użytkownik się zaloguje, ten kod natychmiast przypisze jego login do zmiennej.
     this.courtService.currentUser$.subscribe(user => {
-      this.username = user;
-      console.log('Główny pasek nawigacji wykrył użytkownika:', this.username);
+         this.currentUser = user;
     });
   }
 

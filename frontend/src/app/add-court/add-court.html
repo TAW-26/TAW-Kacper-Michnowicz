@@ -1,0 +1,42 @@
+<div class="add-court-container" style="max-width: 500px; margin: 50px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+  <h2>Dodaj nowy obiekt sportowy</h2>
+  <p style="color: #7f8c8d; font-size: 14px; margin-bottom: 20px;">Panel Administratora</p>
+
+  <form (ngSubmit)="onSubmit()" #courtForm="ngForm">
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold;">Nazwa obiektu</label>
+      <input type="text" name="name" [(ngModel)]="courtData.name" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold;">Typ obiektu</label>
+      <select name="type" [(ngModel)]="courtData.type" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+        <option value="Piłka nożna">Piłka nożna</option>
+        <option value="Tenis">Tenis</option>
+        <option value="Koszykówka">Koszykówka</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold;">Status początkowy</label>
+      <select name="status" [(ngModel)]="courtData.status" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+        <option value="available">Dostępne</option>
+        <option value="booked">Zarezerwowane</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold;">Link do zdjęcia (URL)</label>
+      <input type="text" name="image" [(ngModel)]="courtData.image" placeholder="https://images.unsplash.com/..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+      <button type="submit" [disabled]="!courtForm.valid" style="flex: 1; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">
+        Zapisz obiekt
+      </button>
+      <button type="button" routerLink="/" style="padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        Anuluj
+      </button>
+    </div>
+  </form>
+</div>

@@ -19,14 +19,14 @@ export class HomeComponent implements OnInit {
 
   // Główny strumień z danymi, który połączy filtry i boiska
   filteredCourts$!: Observable<any[]>;
-  username: string | null = null;
+  currentUser: { username: string; role: string; } | null = null;
 
   constructor(private courtService: CourtService) {}
 
   ngOnInit() {
     // Obsługa użytkownika
     this.courtService.currentUser$.subscribe(user => {
-      this.username = user;
+          this.currentUser = user;
     });
 
     // Reaktywny strumień boisk połączony z filtrami
