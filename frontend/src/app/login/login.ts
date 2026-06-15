@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { CourtService } from '../court';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
@@ -21,18 +21,33 @@ export class LoginComponent {
   isLoading: boolean = false;
 
   constructor(
-      private http: HttpClient,
-      private router: Router
-    ) {}
+    private courtService: CourtService,
+    private router: Router
+  ) {}
 
+  // login.ts
   onLogin() {
-    this.http.post('http://localhost:3000/api/auth/login', this.loginData).subscribe({
-      next: (res: any) => {
-        localStorage.setItem('token', res.token);
-        alert('Zalogowano!');
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.courtService.login(this.loginData).subscribe({
+      next: (res) => {
+        this.isLoading = false; // Resetujemy ładowanie przy sukcesie
+        alert('Zalogowano pomyślnie!');
         this.router.navigate(['/']);
       },
-      error: (err) => this.errorMessage = 'Błąd logowania'
+      error: (err) => {
+        this.isLoading = false;
+
+        console.log('Pełny obiekt błędu przechwycony przez Angular:', err);
+
+        // Bezpieczne przypisanie komunikatu o błędzie
+        if (err.error && err.error.error) {
+          this.errorMessage = err.error.error;
+        } else {
+          this.errorMessage = 'Błędny login lub hasło (Status: ' + err.status + ')';
+        }
+      }
     });
   }
 }

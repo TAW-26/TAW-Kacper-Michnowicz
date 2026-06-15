@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const Court = require('../models/Court');
@@ -9,15 +11,14 @@ const User = require('../models/User');
 
 const cors = require('cors');
 
-app.use(cors());
+
 const app = express();
 app.use(express.json());
+app.use(cors());
 
-mongoose.connect('mongodb+srv://user0:1234@cluster0.lo4yax1.mongodb.net/project?appName=Cluster0')
+mongoose.connect(process.env.MONGO_URI)
 
-
-
-const JWT_SECRET = 'tajny_klucz_123';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // rejestracja
 app.post('/api/auth/register', async (req, res) => {
@@ -33,20 +34,31 @@ app.post('/api/auth/register', async (req, res) => {
 
 // logowanie
 app.post('/api/auth/login', async (req, res) => {
-  const { username, password } = req.body;
-  const user = await User.findOne({ username });
+  try {
+    const { username, password } = req.body;
+    console.log("Próba logowania (tekst jawny) dla:", username);
 
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-    return res.status(401).json({ error: "Błędny login lub hasło" });
+    // Szukamy użytkownika w bazie po loginie
+    const user = await User.findOne({ username });
+
+    // Porównujemy hasło za pomocą zwykłego "===" zamiast bcrypt
+    if (!user || user.password !== password) {
+      return res.status(401).json({ error: "Błędny login lub hasło" });
+    }
+
+    // Jeśli dane są poprawne, generujemy token JWT
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    return res.status(200).json({ token });
+
+  } catch (err) {
+    console.error("Błąd serwera podczas logowania:", err);
+    return res.status(500).json({ error: "Wewnętrzny błąd serwera" });
   }
-
-  const token = jwt.sign(
-    { id: user._id, role: user.role },
-    JWT_SECRET,
-    { expiresIn: '1h' }
-  );
-
-  res.json({ token });
 });
 
 
@@ -112,18 +124,21 @@ app.get('/api/courts/:id', async (req, res, next) => {
 
 // UŻYTKOWNIK ZALOGOWANY
 
-// Dokonywanie rezerwacji + Płatność online
+// Dokonywanie rezerwacji
 app.post('/api/reservations', protect(['user', 'admin']), async (req, res, next) => {
   try {
-    const { courtId, start, end } = req.body;
-    const startTime = new Date(start);
-    const endTime = new Date(end);
+    const { courtId, date, startTime, endTime } = req.body;
 
+    // Tworzymy pełne daty dla dotychczasowego walidatora konfliktów terminów
+    const startDateTime = new Date(`${date}T${startTime}`);
+    const endDateTime = new Date(`${date}T${endTime}`);
+
+    // Sprawdzanie konfliktów
     const conflict = await Reservation.findOne({
       courtId: courtId,
       $and: [
-        { start: { $lt: endTime } },
-        { end: { $gt: startTime } }
+        { start: { $lt: endDateTime } },
+        { end: { $gt: startDateTime } }
       ]
     });
 
@@ -131,15 +146,40 @@ app.post('/api/reservations', protect(['user', 'admin']), async (req, res, next)
       return next(new AppError('Ten termin jest już zarezerwowany', 409));
     }
 
+    // Zapis rezerwacji w globalnej kolekcji rezerwacji
     const newRes = new Reservation({
       courtId,
-      start: startTime,
-      end: endTime,
+      start: startDateTime,
+      end: endDateTime,
       paid: true
     });
-
     await newRes.save();
-    res.status(201).json({ message: "Zarezerwowano i opłacono", data: newRes });
+
+
+    const userId = req.user.id; // Wyciągnięte przez middleware "protect" z tokenu JWT
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return next(new AppError('Nie znaleziono zalogowanego użytkownika', 404));
+    }
+
+    // Dodajemy rezerwację w formacie czytelnym tekstowo do tablicy użytkownika
+    user.reservations.push({
+      courtId,
+      date,
+      startTime,
+      endTime,
+      bookedAt: new Date()
+    });
+
+    // Zapisujemy zaktualizowanego użytkownika w bazie MongoDB
+    await user.save();
+
+    res.status(201).json({
+      message: "Zarezerwowano, opłacono i przypisano do użytkownika",
+      data: newRes
+    });
+
   } catch (err) {
     next(err);
   }

@@ -4,13 +4,15 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ['user', 'admin'], default: 'user' }
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  reservations: [
+      {
+        courtId: { type: String, required: true },
+        date: { type: String, required: true },
+        startTime: { type: String, required: true },
+        endTime: { type: String, required: true },
+        bookedAt: { type: Date, default: Date.now }
+      }
+    ]
 });
-
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
-});
-
 module.exports = mongoose.model('User', userSchema);

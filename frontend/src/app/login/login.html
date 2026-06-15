@@ -1,11 +1,12 @@
 <div class="login-container">
   <div class="login-card">
     <div class="login-header">
-      <h2>Witaj ponownie</h2>
+      <h2>Witaj</h2>
       <p>Zaloguj się, aby rezerwować boiska</p>
     </div>
 
     <form (ngSubmit)="onLogin()" #loginForm="ngForm">
+
       <div class="form-group">
         <label for="username">Nazwa użytkownika</label>
         <input
@@ -14,6 +15,7 @@
           name="username"
           [(ngModel)]="loginData.username"
           required
+          #usernameInput="ngModel"
           placeholder="Wpisz login">
       </div>
 
@@ -25,21 +27,22 @@
           name="password"
           [(ngModel)]="loginData.password"
           required
+          #passwordInput="ngModel"
           placeholder="••••••••">
       </div>
 
-      <div class="error-msg" *ngIf="errorMessage">
+      <div class="error-msg" *ngIf="errorMessage" style="color: #e74c3c; margin: 10px 0; text-align: center; font-size: 14px;">
         {{ errorMessage }}
       </div>
 
       <button type="submit" class="btn-login" [disabled]="!loginForm.valid || isLoading">
         <span *ngIf="!isLoading">Zaloguj się</span>
-        <span *ngIf="isLoading" class="loader"></span>
+        <span *ngIf="isLoading">Logowanie...</span>
       </button>
     </form>
 
     <div class="login-footer">
-      <p>Nie masz konta? <a href="#">Zarejestruj się</a></p>
+      <p>Nie masz konta? <a routerLink="/register">Zarejestruj się</a></p>
     </div>
   </div>
 </div>

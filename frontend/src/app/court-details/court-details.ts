@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
+import { CourtService } from '../court';
+import { Observable, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-court-details',
@@ -11,15 +13,8 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
   styleUrl: './court-details.css'
 })
 export class CourtDetailsComponent implements OnInit {
-  courtId: string | null = null;
-
-  court = {
-    name: 'Orlik przy Szkole nr 5',
-    type: 'Piłka nożna',
-    description: 'Nowoczesne boisko ze sztuczną nawierzchnią i oświetleniem LED.',
-    price: 50,
-    address: 'ul. Sportowa 12, Warszawa'
-  };
+  court$!: Observable<any>;
+  courtId: string = '';
 
   reservation = {
     date: '',
@@ -27,20 +22,58 @@ export class CourtDetailsComponent implements OnInit {
     endTime: ''
   };
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private route: ActivatedRoute,
+    public courtService: CourtService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
-    this.courtId = this.route.snapshot.paramMap.get('id');
+    this.court$ = this.route.paramMap.pipe(
+      switchMap(params => {
+        this.courtId = params.get('id') || '';
+        console.log('Odczytane ID obiektu z URL na żywo:', this.courtId);
+        return this.courtService.getCourtById(this.courtId);
+      }),
+      tap(data => console.log('Dane obiektu pobrane pomyślnie:', data))
+    );
   }
 
-  onSubmitReservation() {
-    const payload = {
+  onSubmitReservation(courtName: string) {
+    const fullReservation = {
       courtId: this.courtId,
-      start: `${this.reservation.date}T${this.reservation.startTime}:00.000Z`,
-      end: `${this.reservation.date}T${this.reservation.endTime}:00.000Z`
+      date: this.reservation.date,
+      startTime: this.reservation.startTime,
+      endTime: this.reservation.endTime
     };
 
-    console.log('Wysyłanie rezerwacji:', payload);
-    alert('Rezerwacja została wysłana! Sprawdź panel użytkownika.');
+    this.courtService.postReservation(fullReservation).subscribe({
+      next: (res) => {
+        const currentUser = localStorage.getItem('username') || 'gosc';
+
+        // Pobieramy dotychczasowe rezerwacje zapisane w przeglądarce dla tego użytkownika
+        const localResKey = `reservations_${currentUser}`;
+        const existingReservations = JSON.parse(localStorage.getItem(localResKey) || '[]');
+
+        const newLocalRes = {
+          id: 'R' + (existingReservations.length + 1),
+          courtName: courtName,
+          date: this.reservation.date,
+          time: `${this.reservation.startTime} - ${this.reservation.endTime}`,
+          status: 'confirmed'
+        };
+
+        // Dodajemy do listy i zapisujemy z powrotem w localStorage
+        existingReservations.push(newLocalRes);
+        localStorage.setItem(localResKey, JSON.stringify(existingReservations));
+
+        alert('Obiekt został pomyślnie zarezerwowany!');
+        this.router.navigate(['/profile']); // Przekierowujemy od razu do profilu, żeby zobaczyć efekt!
+      },
+      error: (err) => {
+        console.error(err);
+        alert('Nie udało się zapisać rezerwacji. Sprawdź poprawność danych.');
+      }
+    });
   }
 }

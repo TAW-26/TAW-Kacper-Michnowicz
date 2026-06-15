@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
+import { CourtService } from '../court';
 
 interface Reservation {
   id: string;
@@ -18,27 +19,52 @@ interface Reservation {
   styleUrl: './profile.css'
 })
 export class ProfileComponent implements OnInit {
+  // Obiekt użytkownika dynamicznie pobierany z systemu logowania
   user = {
-    username: 'JanuszSportu',
-    email: 'janusz@przyklad.pl',
-    memberSince: '2024-01-15'
+    username: 'Gość',
+    role: 'user'
   };
 
-  reservations: Reservation[] = [
-    { id: 'R1', courtName: 'Orlik przy Szkole nr 5', date: '2026-05-15', time: '18:00 - 19:00', status: 'confirmed' },
-    { id: 'R2', courtName: 'Hala Arena', date: '2026-05-20', time: '20:00 - 21:00', status: 'pending' }
-  ];
+  reservations: Reservation[] = [];
 
-  constructor() {}
+  constructor(
+    private courtService: CourtService,
+    private router: Router
+  ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    // Pobieramy aktualny login z localStorage
+    const loggedInUsername = localStorage.getItem('username');
+
+    if (loggedInUsername) {
+      this.user.username = loggedInUsername;
+
+      // Pobieramy rezerwacje przypisane TYLKO do tego użytkownika
+      const localResKey = `reservations_${loggedInUsername}`;
+      this.reservations = JSON.parse(localStorage.getItem(localResKey) || '[]');
+    } else {
+      // Jeśli nikt nie jest zalogowany, przekieruj na logowanie
+      this.router.navigate(['/login']);
+    }
+  }
 
   cancelReservation(id: string) {
     if(confirm('Czy na pewno chcesz anulować tę rezerwację?')) {
+      // Aktualizujemy status lokalnie w tablicy
       this.reservations = this.reservations.map(res =>
         res.id === id ? { ...res, status: 'cancelled' as const } : res
       );
-      console.log('Anulowano rezerwację:', id);
+
+      // Zapisujemy zaktualizowaną listę z powrotem do localStorage
+      const localResKey = `reservations_${this.user.username}`;
+      localStorage.setItem(localResKey, JSON.stringify(this.reservations));
+
+      console.log('Anulowano lokalnie rezerwację:', id);
     }
+  }
+
+  logout() {
+    this.courtService.logout();
+    this.router.navigate(['/']);
   }
 }
